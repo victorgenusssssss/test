@@ -1,7 +1,39 @@
 ---
-- name: Ping Test
+- name: Enable firewall on Ubuntu and CentOS
   hosts: all
-  gather_facts: false
+  become: yes
   tasks:
-    - name: Ping the server
-      ping:
+    - name: Enable firewall on Ubuntu (ufw)
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Enable and start UFW on Ubuntu
+      ansible.builtin.command: ufw enable
+      when: ansible_os_family == "Debian"
+
+    - name: Allow all incoming SSH connections (Ubuntu)
+      ansible.builtin.command: ufw allow ssh
+      when: ansible_os_family == "Debian"
+
+    - name: Enable firewall on CentOS (firewalld)
+      ansible.builtin.yum:
+        name: firewalld
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Start and enable firewalld on CentOS
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: yes
+      when: ansible_os_family == "RedHat"
+
+    - name: Allow all incoming SSH connections (CentOS)
+      ansible.builtin.firewalld:
+        service: ssh
+        permanent: yes
+        state: enabled
+        immediate: yes
+      when: ansible_os_family == "RedHat"
